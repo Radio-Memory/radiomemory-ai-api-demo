@@ -170,7 +170,7 @@ def draw_bboxes(image, bboxes, th=0.5):
             continue
         color = plt.get_cmap("hsv")(idx / 32)  # Number of teeth
         color = [int(x * 255) for x in color]
-        text = f"bs: {bbox['score']:.2f}"
+        text = f"{bbox['class_name']} {bbox['score']:.2f}"
         dimage = draw_bbox(
             dimage,
             [bbox["x1"], bbox["y1"], bbox["x2"], bbox["y2"]],
