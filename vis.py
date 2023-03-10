@@ -1,10 +1,11 @@
+from collections import defaultdict
 from typing import Tuple, Union
 
 import cv2
+import distinctipy
+import matplotlib.pylab as plt
 import numpy as np
 from PIL import Image
-from collections import defaultdict
-import matplotlib.pylab as plt
 
 
 def preprocess_image_draw(image: Union[Image.Image, np.ndarray]):
@@ -76,8 +77,8 @@ def draw_longaxis_output(
     for tooth_name, keypoints in teeth_map.items():
         if np.mean([p["score"] for p in keypoints]) < th:
             continue
-        pt0 = [keypoints[0]["x"], keypoints[0]["y"]]
-        pt1 = [keypoints[1]["x"], keypoints[1]["y"]]
+        pt0 = keypoints[0]["point"]
+        pt1 = keypoints[1]["point"]
         image = draw_tooth(
             image,
             pt0,
@@ -173,7 +174,7 @@ def draw_bboxes(image, bboxes, th=0.5):
         text = f"{bbox['class_name']} {bbox['score']:.2f}"
         dimage = draw_bbox(
             dimage,
-            [bbox["x1"], bbox["y1"], bbox["x2"], bbox["y2"]],
+            bbox["bbox"],
             color=color,
             text=text,
         )
@@ -217,3 +218,117 @@ def draw_contours(image, contours, color=(255, 0, 0), closed=False):
         thickness=2,
     )
     return dimage
+
+
+def draw_procedures_output(
+    img,
+    entities,
+    point_names=None,
+    plot_labels=False,
+):
+    img = preprocess_image_draw(img)
+
+    height, width = img.shape[:2]
+    scale = max(img.shape) / 2000
+    shown_cls = []
+
+    max_upper_limit = height
+    mand_lower_limit = 0
+
+    tooth_map = defaultdict(list)
+    for e in entities:
+        tooth_map[e["tooth"]].append(e)
+
+    CLASSES = sorted(list({e["class_name"] for e in entities}))
+
+    colors = distinctipy.get_colors(len(CLASSES), rng=139)
+
+    for e in entities:
+        point = e["line"]
+        if point[0][1] < point[1][1]:  # Mandibula
+            if point[1][1] > mand_lower_limit:
+                mand_lower_limit = point[1][1]
+        if point[0][1] > point[1][1]:  # Maxila
+            if point[1][1] < max_upper_limit:
+                max_upper_limit = point[1][1]
+
+    for i, (tooth, ents) in enumerate(tooth_map.items()):
+        point = ents[0]["line"]
+        label = ents[0]["class_name"]
+        if point[0][1] < point[1][1]:  # Mandibula
+
+            xb, yb = point[1][0], point[1][1]  # botton coods
+            xt, yt = point[0][0], point[0][1]  # top coords
+
+            ax, ay = xb - xt, yb - yt  # center point
+            pv = np.array([0, ay]) / 6
+
+            for j, e in enumerate(ents):
+                color = colors[CLASSES.index(e["class_name"])]
+                color = [x * 255 for x in color]
+                offset = j
+                shown_cls.append(e["class_name"])
+                img = cv2.circle(
+                    img,
+                    (
+                        int(xb + offset * pv[0]),
+                        int(1.05 * mand_lower_limit + offset * pv[1]),
+                    ),
+                    int(max(img.shape) / 200),
+                    color,
+                    -1,
+                )
+        elif point[0][1] > point[1][1]:  # Maxila
+
+            xb, yb = point[0][0], point[0][1]
+            xt, yt = point[1][0], point[1][1]
+
+            ax, ay = xt - xb, yt - yb
+
+            pv = np.array([0, ay]) / 6
+
+            for j, e in enumerate(ents):
+                # color = plt.get_cmap("hsv")(
+                #     CLASSES.index(l) / len(CLASSES)
+                # )  # Number of classes on COCO
+                color = colors[CLASSES.index(e["class_name"])]
+                color = [x * 255 for x in color]
+                # offset = j - len(label) // 2
+                offset = j
+                shown_cls.append(e["class_name"])
+                img = cv2.circle(
+                    img,
+                    (
+                        int(xt + offset * pv[0]),
+                        int(0.95 * max_upper_limit + offset * pv[1]),
+                    ),
+                    int(max(img.shape) / 200),
+                    color,
+                    -1,
+                )
+
+    bimg = np.zeros((height, int(width + 500 * scale), 3), dtype=np.uint8)
+    bimg[:height, :width, :] = img
+    width = bimg.shape[1]
+    for i, _cls in enumerate(list(set(shown_cls))):
+        # color = plt.get_cmap("hsv")(
+        #     CLASSES.index(_cls) / len(CLASSES)
+        # )  # Number of classes on COCO
+        color = colors[CLASSES.index(_cls)]
+        color = [x * 255 for x in color]
+        text = _cls
+        font_scale = scale * 1
+        img = cv2.putText(
+            bimg,
+            text,
+            (
+                int(width - 500 * scale + scale * 50),
+                int(height - 500 * scale + i * 40 * scale),
+            ),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            font_scale,
+            color,
+            thickness=int(3 * scale),
+        )
+
+    return img
