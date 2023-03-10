@@ -206,6 +206,13 @@ def draw_masks(image, masks):
     return dimage
 
 
+def draw_heatmap(image, heatmap):
+    dimage = preprocess_image_draw(image)
+    alpha = 0.2
+    dimage = cv2.addWeighted(dimage, 1, heatmap, 1 - alpha, 0)
+    return dimage
+
+
 def draw_contours(image, contours, color=(255, 0, 0), closed=False):
 
     dimage = preprocess_image_draw(image)
