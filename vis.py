@@ -339,3 +339,24 @@ def draw_procedures_output(
         )
 
     return img
+
+
+def draw_points(image, entities):
+    dimage = preprocess_image_draw(image)
+    width, height = image.size
+    draw_scale = max(height, width) / 2000
+    for ent in entities:
+        x, y = ent["point"]
+        dimage = cv2.circle(dimage, (x, y), int(10 * draw_scale), (0, 255, 0), -1)
+        dimage = cv2.putText(
+            dimage,
+            ent["class_name"],
+            (x, int(y - width / 80)),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            draw_scale,
+            (255, 0, 0),
+            int(4 * draw_scale),
+            cv2.LINE_AA,
+        )
+
+    return dimage
