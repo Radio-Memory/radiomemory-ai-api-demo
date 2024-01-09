@@ -347,11 +347,11 @@ def draw_points(image, entities):
     draw_scale = max(height, width) / 2000
     for ent in entities:
         x, y = ent["point"]
-        dimage = cv2.circle(dimage, (x, y), int(10 * draw_scale), (0, 255, 0), -1)
+        dimage = cv2.circle(dimage, (int(x), int(y)), int(10 * draw_scale), (0, 255, 0), -1)
         dimage = cv2.putText(
             dimage,
             ent["class_name"],
-            (x, int(y - width / 80)),
+            (int(x), int(y - width / 80)),
             cv2.FONT_HERSHEY_SIMPLEX,
             draw_scale,
             (255, 0, 0),
