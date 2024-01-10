@@ -7,6 +7,8 @@ import matplotlib.pylab as plt
 import numpy as np
 from PIL import Image
 
+import plotly.graph_objs as go
+
 
 def preprocess_image_draw(image: Union[Image.Image, np.ndarray]):
 
@@ -360,3 +362,67 @@ def draw_points(image, entities):
         )
 
     return dimage
+
+
+
+def draw_pointsV2(img, entities):
+    fig = go.Figure()
+
+    width, height = img.size
+
+    x_list = []
+    y_list = []
+    text_list = []
+    for ent in entities:
+        x,y = ent["point"]
+
+        x_list.append(x)
+        y_list.append(height - y)
+        text_list.append(ent["class_name"])
+
+    fig.add_trace(
+        go.Scatter(
+            x=x_list, 
+            y=y_list,
+            mode="markers+text",
+            text=text_list,
+            marker=dict(
+                    color='rgb(0, 255, 0)',
+                    ),
+            textfont_color="rgb(255, 0, 0)",
+            )
+    )
+
+    # fig.add_trace(
+    #     go.Scatter(x=[0, 0.5, 1, 2, 2.2], y=[1.23, 2.5, 0.42, 3, 1])
+    # )
+    
+    fig.update_traces(textposition='top center', hoverinfo='text')
+    fig.update_layout(showlegend=False)
+    fig.update_xaxes(visible=False)
+    fig.update_yaxes(visible=False)
+
+    fig.update_yaxes(range = [0,height])
+    fig.update_xaxes(range = [0,width])
+    fig.update_layout(autosize=False,
+                      width=1000,
+                      height=1000,
+                    )
+    
+    fig.add_layout_image(
+            dict(
+                source=img,
+                xref="x",
+                yref="y",
+                x=0,
+                y=height,
+                sizex=width,
+                sizey=height,
+                sizing="stretch",
+                opacity=1.0,
+                layer="below",
+                )
+    )
+    fig['layout'].update(margin=dict(l=0,r=0,b=0,t=0))
+    
+    offline.iplot(fig)
