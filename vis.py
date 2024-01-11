@@ -392,10 +392,6 @@ def draw_pointsV2(img, entities):
             textfont_color="rgb(255, 0, 0)",
             )
     )
-
-    # fig.add_trace(
-    #     go.Scatter(x=[0, 0.5, 1, 2, 2.2], y=[1.23, 2.5, 0.42, 3, 1])
-    # )
     
     fig.update_traces(textposition='top center', hoverinfo='text')
     fig.update_layout(showlegend=False)
@@ -404,10 +400,9 @@ def draw_pointsV2(img, entities):
 
     fig.update_yaxes(range = [0,height])
     fig.update_xaxes(range = [0,width])
-    fig.update_layout(autosize=False,
-                      width=1000,
-                      height=1000,
-                    )
+    fig.layout["autosize"] = False
+    fig.layout["width"] = 760
+    fig.layout["height"] = 760
     
     fig.add_layout_image(
             dict(
@@ -425,4 +420,4 @@ def draw_pointsV2(img, entities):
     )
     fig['layout'].update(margin=dict(l=0,r=0,b=0,t=0))
     
-    offline.iplot(fig)
+    return fig
