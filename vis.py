@@ -406,7 +406,7 @@ def draw_pointsV2(img, entities, keep_aspect_ratio:bool = False):
     w_ratio = 1.0
     
     if keep_aspect_ratio:
-        w_ratio = width / height
+        h_ratio = height / width
 
     fig.layout["width"] = int(w_ratio * 760)
     fig.layout["height"] = int(h_ratio * 760)
