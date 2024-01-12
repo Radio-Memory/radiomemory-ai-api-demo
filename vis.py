@@ -72,15 +72,15 @@ def draw_longaxis_output(
 ):
 
     image = preprocess_image_draw(image)
-    teeth_map = defaultdict(list)
+    
     for keypoint in keypoints:
-        tooth_name = keypoint["class_name"].split("_")[0]
-        teeth_map[tooth_name].append(keypoint)
-    for tooth_name, keypoints in teeth_map.items():
-        if np.mean([p["score"] for p in keypoints]) < th:
+        if keypoint["score"] < th:
             continue
-        pt0 = keypoints[0]["point"]
-        pt1 = keypoints[1]["point"]
+        pt0 = keypoint["line"][0]
+        pt1 = keypoint["line"][1]
+        
+        tooth_name = keypoint["class_name"]
+
         image = draw_tooth(
             image,
             pt0,
