@@ -7,6 +7,8 @@ import matplotlib.pylab as plt
 import numpy as np
 from PIL import Image
 
+import plotly.graph_objs as go
+
 
 def preprocess_image_draw(image: Union[Image.Image, np.ndarray]):
 
@@ -70,15 +72,15 @@ def draw_longaxis_output(
 ):
 
     image = preprocess_image_draw(image)
-    teeth_map = defaultdict(list)
+    
     for keypoint in keypoints:
-        tooth_name = keypoint["class_name"].split("_")[0]
-        teeth_map[tooth_name].append(keypoint)
-    for tooth_name, keypoints in teeth_map.items():
-        if np.mean([p["score"] for p in keypoints]) < th:
+        if keypoint["score"] < th:
             continue
-        pt0 = keypoints[0]["point"]
-        pt1 = keypoints[1]["point"]
+        pt0 = keypoint["line"][0]
+        pt1 = keypoint["line"][1]
+        
+        tooth_name = keypoint["class_name"]
+
         image = draw_tooth(
             image,
             pt0,
@@ -360,3 +362,69 @@ def draw_points(image, entities):
         )
 
     return dimage
+
+
+
+def draw_pointsV2(img, entities, keep_aspect_ratio:bool = False):
+    fig = go.Figure()
+
+    width, height = img.size
+
+    x_list = []
+    y_list = []
+    text_list = []
+    for ent in entities:
+        x,y = ent["point"]
+
+        x_list.append(x)
+        y_list.append(height - y)
+        text_list.append(ent["class_name"])
+
+    fig.add_trace(
+        go.Scatter(
+            x=x_list, 
+            y=y_list,
+            mode="markers+text",
+            text=text_list,
+            marker=dict(
+                    color='rgb(0, 255, 0)',
+                    ),
+            textfont_color="rgb(255, 0, 0)",
+            )
+    )
+    
+    fig.update_traces(textposition='top center', hoverinfo='text')
+    fig.update_layout(showlegend=False)
+    fig.update_xaxes(visible=False)
+    fig.update_yaxes(visible=False)
+
+    fig.update_yaxes(range = [0,height])
+    fig.update_xaxes(range = [0,width])
+    fig.layout["autosize"] = False
+
+    h_ratio = 1.0
+    w_ratio = 1.0
+    
+    if keep_aspect_ratio:
+        w_ratio = width / height
+
+    fig.layout["width"] = int(w_ratio * 760)
+    fig.layout["height"] = int(h_ratio * 760)
+    
+    fig.add_layout_image(
+            dict(
+                source=img,
+                xref="x",
+                yref="y",
+                x=0,
+                y=height,
+                sizex=width,
+                sizey=height,
+                sizing="stretch",
+                opacity=1.0,
+                layer="below",
+                )
+    )
+    fig['layout'].update(margin=dict(l=0,r=0,b=0,t=0))
+    
+    return fig
