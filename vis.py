@@ -365,7 +365,7 @@ def draw_points(image, entities):
 
 
 
-def draw_pointsV2(img, entities):
+def draw_pointsV2(img, entities, keep_aspect_ratio:bool = False):
     fig = go.Figure()
 
     width, height = img.size
@@ -401,8 +401,15 @@ def draw_pointsV2(img, entities):
     fig.update_yaxes(range = [0,height])
     fig.update_xaxes(range = [0,width])
     fig.layout["autosize"] = False
-    fig.layout["width"] = 760
-    fig.layout["height"] = 760
+
+    h_ratio = 1.0
+    w_ratio = 1.0
+    
+    if keep_aspect_ratio:
+        w_ratio = width / height
+
+    fig.layout["width"] = int(w_ratio * 760)
+    fig.layout["height"] = int(h_ratio * 760)
     
     fig.add_layout_image(
             dict(
